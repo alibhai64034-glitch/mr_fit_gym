@@ -153,6 +153,64 @@ let member: MemberProfile = {
   bodyFatPct: 12.8,
 };
 
+let membersList: MemberProfile[] = [
+  member,
+  {
+    id: 'mem_02',
+    name: 'Sarah Connor',
+    email: 'sarah.c@cyberdyne.fit',
+    phone: '+1 (555) 890-1234',
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+    tier: 'Executive Performance',
+    status: 'Active',
+    joinedDate: '2025-11-10',
+    renewalDate: '2026-11-10',
+    billingCycle: 'Annual',
+    autoRenew: true,
+    assignedTrainerId: 'tr_elena',
+    fitnessGoal: 'Tactical Conditioning & Functional Power',
+    currentWeightKg: 64.2,
+    targetWeightKg: 63.0,
+    bodyFatPct: 15.4,
+  },
+  {
+    id: 'mem_03',
+    name: 'David Goggins',
+    email: 'stay.hard@canthurtme.org',
+    phone: '+1 (555) 777-4321',
+    avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+    tier: 'Black Onyx VIP',
+    status: 'Active',
+    joinedDate: '2026-02-01',
+    renewalDate: '2026-12-01',
+    billingCycle: 'Monthly',
+    autoRenew: true,
+    assignedTrainerId: 'tr_damon',
+    fitnessGoal: 'Ultra-Endurance & Mental Fortitude',
+    currentWeightKg: 86.0,
+    targetWeightKg: 85.0,
+    bodyFatPct: 9.8,
+  },
+  {
+    id: 'mem_04',
+    name: 'Chloe Zhao',
+    email: 'chloe.z@studioarch.com',
+    phone: '+1 (555) 345-6789',
+    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+    tier: 'Standard Core',
+    status: 'Frozen',
+    joinedDate: '2026-03-12',
+    renewalDate: '2026-10-25',
+    billingCycle: 'Monthly',
+    autoRenew: false,
+    assignedTrainerId: 'tr_marcus',
+    fitnessGoal: 'Postural Realignment & Mobility',
+    currentWeightKg: 58.5,
+    targetWeightKg: 58.0,
+    bodyFatPct: 18.2,
+  },
+];
+
 const trainers: Trainer[] = [
   {
     id: 'tr_marcus',
@@ -783,6 +841,141 @@ async function startServer() {
   // Automated Email Notifications Log
   app.get('/api/notifications/emails', (req, res) => {
     res.json(emailNotifications);
+  });
+
+  // ADMIN ENDPOINTS
+  app.post('/api/admin/login', (req, res) => {
+    const { email, password } = req.body;
+    // Allow demo admin login with admin@mrfitgym.com / admin123 or pin 1234 or any admin password
+    if ((email === 'admin@mrfitgym.com' && password === 'admin123') || password === 'admin' || password === '1234') {
+      return res.json({
+        success: true,
+        token: 'admin-jwt-session-2026',
+        adminUser: {
+          name: 'Marcus Vance',
+          role: 'General Manager & Performance Director',
+          email: 'admin@mrfitgym.com',
+        },
+      });
+    }
+    return res.status(401).json({ error: 'Invalid admin credentials. Use admin@mrfitgym.com / admin123' });
+  });
+
+  app.get('/api/admin/members', (req, res) => {
+    res.json(membersList);
+  });
+
+  app.post('/api/admin/members', (req, res) => {
+    const newMember: MemberProfile = {
+      id: `mem_${Date.now()}`,
+      joinedDate: new Date().toISOString().slice(0, 10),
+      renewalDate: '2026-11-20',
+      autoRenew: true,
+      billingCycle: 'Monthly',
+      status: 'Active',
+      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+      assignedTrainerId: 'tr_marcus',
+      currentWeightKg: 75.0,
+      targetWeightKg: 75.0,
+      bodyFatPct: 14.0,
+      fitnessGoal: 'General Athletic Optimization',
+      ...req.body,
+    };
+    membersList.unshift(newMember);
+
+    triggerAutomatedEmail(
+      newMember.email,
+      newMember.name,
+      `Welcome to Mr Fit Gym: Staff Enrolled (${newMember.tier})`,
+      'membership_welcome',
+      `Your account has been configured by management. Biometric access pass ready...`,
+      `<div style="font-family: Arial, sans-serif; background: #0b0d13; color: #f1f5f9; padding: 24px; border-radius: 6px;">
+        <h3 style="color: #c2f83d;">Mr Fit Gym Membership Enrolled</h3>
+        <p>Welcome, ${newMember.name}. You have been assigned tier <strong>${newMember.tier}</strong>.</p>
+        <p>Access is active immediately at 480 Ironworks Way.</p>
+      </div>`
+    );
+
+    res.json({ success: true, member: newMember });
+  });
+
+  app.post('/api/admin/members/:id/status', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const m = membersList.find(x => x.id === id);
+    if (!m) return res.status(404).json({ error: 'Member not found' });
+    m.status = status;
+    if (m.id === member.id) member.status = status;
+
+    triggerAutomatedEmail(
+      m.email,
+      m.name,
+      `Membership Account Status Updated: ${status}`,
+      'plan_update',
+      `Your account status has been set to ${status} by Mr Fit Gym administration.`,
+      `<div style="font-family: Arial, sans-serif; background: #0b0d13; color: #f1f5f9; padding: 24px; border-radius: 6px;">
+        <p>Dear ${m.name}, your membership account status is now <strong>${status}</strong>.</p>
+      </div>`
+    );
+
+    res.json({ success: true, member: m });
+  });
+
+  app.post('/api/admin/members/:id/tier', (req, res) => {
+    const { id } = req.params;
+    const { tier } = req.body;
+    const m = membersList.find(x => x.id === id);
+    if (!m) return res.status(404).json({ error: 'Member not found' });
+    m.tier = tier;
+    if (m.id === member.id) member.tier = tier;
+
+    triggerAutomatedEmail(
+      m.email,
+      m.name,
+      `Membership Tier Adjusted by Admin: ${tier}`,
+      'plan_update',
+      `Your membership tier has been updated to ${tier}. All corresponding privileges are active.`,
+      `<div style="font-family: Arial, sans-serif; background: #0b0d13; color: #f1f5f9; padding: 24px; border-radius: 6px;">
+        <p>Dear ${m.name}, your tier has been upgraded/adjusted to <strong>${tier}</strong>.</p>
+      </div>`
+    );
+
+    res.json({ success: true, member: m });
+  });
+
+  app.delete('/api/admin/members/:id', (req, res) => {
+    const { id } = req.params;
+    const idx = membersList.findIndex(x => x.id === id);
+    if (idx !== -1) {
+      const removed = membersList.splice(idx, 1)[0];
+      return res.json({ success: true, removed });
+    }
+    res.status(404).json({ error: 'Member not found' });
+  });
+
+  app.post('/api/admin/equipment/:id/status', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const eq = equipmentCatalog.find(e => e.id === id);
+    if (!eq) return res.status(404).json({ error: 'Equipment not found' });
+    eq.status = status;
+    res.json({ success: true, equipment: eq });
+  });
+
+  app.post('/api/admin/notifications/broadcast', (req, res) => {
+    const { recipientEmail, recipientName, subject, message } = req.body;
+    const sent = triggerAutomatedEmail(
+      recipientEmail || 'alex.hunter@performance.io',
+      recipientName || 'Alex Hunter',
+      subject || 'Notice from Mr Fit Gym Administration',
+      'plan_update',
+      message || 'Official operational announcement from gym leadership...',
+      `<div style="font-family: Arial, sans-serif; background: #0b0d13; color: #f1f5f9; padding: 24px; border-radius: 6px;">
+        <h3 style="color: #c2f83d;">Mr Fit Gym Management Communication</h3>
+        <p>${message || 'Official update regarding your membership account and facility access.'}</p>
+      </div>`
+    );
+    res.json({ success: true, email: sent });
   });
 
   // Mount Vite or Serve Static Files

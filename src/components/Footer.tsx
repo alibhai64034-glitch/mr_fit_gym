@@ -4,9 +4,10 @@ import { Dumbbell, MapPin, Clock, Phone, Mail, ShieldCheck } from 'lucide-react'
 interface FooterProps {
   onScrollTo: (id: string) => void;
   onOpenBooking: () => void;
+  onOpenAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onScrollTo, onOpenBooking }) => {
+export const Footer: React.FC<FooterProps> = ({ onScrollTo, onOpenBooking, onOpenAdmin }) => {
   return (
     <footer className="bg-[#050608] border-t border-white/[0.08] text-slate-400 text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -76,6 +77,16 @@ export const Footer: React.FC<FooterProps> = ({ onScrollTo, onOpenBooking }) => 
                   Memberships & Pricing
                 </button>
               </li>
+              {onOpenAdmin && (
+                <li className="pt-1">
+                  <button
+                    onClick={onOpenAdmin}
+                    className="text-[#c2f83d] hover:underline font-mono font-semibold flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Staff & Admin Portal →</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 

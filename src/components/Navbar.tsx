@@ -3,16 +3,18 @@ import { Dumbbell, Shield, User, Calendar, Bell, ChevronDown, Check } from 'luci
 import { MemberProfile } from '../types';
 
 interface NavbarProps {
-  currentView: 'home' | 'dashboard';
-  setCurrentView: (view: 'home' | 'dashboard') => void;
+  currentView: 'home' | 'dashboard' | 'admin';
+  setCurrentView: (view: 'home' | 'dashboard' | 'admin') => void;
   activeDashboardTab: string;
   setActiveDashboardTab: (tab: string) => void;
   member: MemberProfile;
-  userRole: 'member' | 'trainer';
-  setUserRole: (role: 'member' | 'trainer') => void;
+  userRole: 'member' | 'trainer' | 'admin';
+  setUserRole: (role: 'member' | 'trainer' | 'admin') => void;
   onOpenBooking: () => void;
   unreadEmailsCount: number;
   onOpenNotifications: () => void;
+  onOpenAdminLogin: () => void;
+  isAdminLoggedIn: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -25,6 +27,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenBooking,
   unreadEmailsCount,
   onOpenNotifications,
+  onOpenAdminLogin,
+  isAdminLoggedIn,
 }) => {
   const [roleDropdownOpen, setRoleDropdownOpen] = React.useState(false);
 
@@ -133,7 +137,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setActiveDashboardTab(userRole === 'trainer' ? 'reports' : 'subscription');
               }
             }}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-2 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
               currentView === 'dashboard'
                 ? 'bg-white text-slate-900 border-white'
                 : 'bg-white/[0.06] text-white border-white/[0.12] hover:bg-white/[0.1]'
@@ -142,7 +146,28 @@ export const Navbar: React.FC<NavbarProps> = ({
             {currentView === 'dashboard' ? 'Back to Website' : 'Member Portal'}
           </button>
 
-          {/* Role Persona Switcher (Member vs Trainer) */}
+          {/* Dedicated Admin Portal Button */}
+          <button
+            onClick={() => {
+              if (currentView === 'admin') {
+                setCurrentView('home');
+              } else if (isAdminLoggedIn) {
+                setCurrentView('admin');
+              } else {
+                onOpenAdminLogin();
+              }
+            }}
+            className={`px-3 py-2 text-xs font-bold rounded-lg border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+              currentView === 'admin'
+                ? 'bg-[#c2f83d] text-black border-[#c2f83d] shadow-sm'
+                : 'bg-[#c2f83d]/10 text-[#c2f83d] border-[#c2f83d]/30 hover:bg-[#c2f83d]/20'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5 fill-current" />
+            <span>Admin Portal</span>
+          </button>
+
+          {/* Role Persona Switcher (Member vs Trainer vs Admin) */}
           <div className="relative">
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
@@ -151,24 +176,27 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="w-5 h-5 rounded-full bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
                 {userRole === 'member' ? (
                   <User className="w-3.5 h-3.5 text-slate-300" />
-                ) : (
+                ) : userRole === 'trainer' ? (
                   <Shield className="w-3.5 h-3.5 text-[#c2f83d]" />
+                ) : (
+                  <Shield className="w-3.5 h-3.5 text-amber-400" />
                 )}
               </div>
               <span className="hidden lg:inline text-xs font-medium text-slate-200 truncate max-w-[100px]">
-                {userRole === 'member' ? member.name : 'Coach Marcus'}
+                {userRole === 'member' ? member.name : userRole === 'trainer' ? 'Coach Marcus' : 'Staff Admin'}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
 
             {roleDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#12151d] border border-white/10 shadow-2xl py-2 z-50">
+              <div className="absolute right-0 mt-2 w-60 rounded-xl bg-[#12151d] border border-white/10 shadow-2xl py-2 z-50">
                 <div className="px-3 py-1.5 border-b border-white/[0.06] text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                  Switch Persona Demo
+                  Switch Persona / Role
                 </div>
                 <button
                   onClick={() => {
                     setUserRole('member');
+                    if (currentView === 'admin') setCurrentView('dashboard');
                     setRoleDropdownOpen(false);
                   }}
                   className="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-white/[0.05] text-slate-200 cursor-pointer"
@@ -182,6 +210,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={() => {
                     setUserRole('trainer');
+                    if (currentView === 'admin') setCurrentView('dashboard');
                     setRoleDropdownOpen(false);
                   }}
                   className="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-white/[0.05] text-slate-200 cursor-pointer"
@@ -191,6 +220,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className="text-[11px] text-[#c2f83d]">CSCS Coach · Can Publish Reports</div>
                   </div>
                   {userRole === 'trainer' && <Check className="w-4 h-4 text-[#c2f83d]" />}
+                </button>
+                <button
+                  onClick={() => {
+                    setUserRole('admin');
+                    setCurrentView('admin');
+                    setRoleDropdownOpen(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-white/[0.05] text-slate-200 cursor-pointer border-t border-white/[0.06] mt-1 pt-2"
+                >
+                  <div>
+                    <div className="font-semibold text-[#c2f83d]">Staff Admin Suite</div>
+                    <div className="text-[11px] text-slate-400">Member Directory · Subscriptions · Logs</div>
+                  </div>
+                  {currentView === 'admin' && <Check className="w-4 h-4 text-[#c2f83d]" />}
                 </button>
               </div>
             )}

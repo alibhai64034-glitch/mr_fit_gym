@@ -5,6 +5,8 @@ import { EquipmentGallery } from './components/EquipmentGallery';
 import { TrainerNutritionSection } from './components/TrainerNutritionSection';
 import { MembershipPlans } from './components/MembershipPlans';
 import { DashboardView } from './components/DashboardView';
+import { AdminPortal } from './components/AdminPortal';
+import { AdminLoginModal } from './components/AdminLoginModal';
 import { PaymentModal } from './components/PaymentModal';
 import { BookingCalendarModal } from './components/BookingCalendarModal';
 import { NotificationsModal } from './components/NotificationsModal';
@@ -20,9 +22,11 @@ import {
 import { api } from './api/client';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'dashboard'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'dashboard' | 'admin'>('home');
   const [activeDashboardTab, setActiveDashboardTab] = useState<string>('subscription');
-  const [userRole, setUserRole] = useState<'member' | 'trainer'>('member');
+  const [userRole, setUserRole] = useState<'member' | 'trainer' | 'admin'>('member');
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(true); // Pre-authenticated for convenient evaluation
+  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
 
   // Application Data
   const [member, setMember] = useState<MemberProfile>({
@@ -60,6 +64,18 @@ export default function App() {
   const [paymentPrice, setPaymentPrice] = useState<number>(189);
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  // Check URL hash or query on load for #admin or ?admin
+  useEffect(() => {
+    if (
+      window.location.hash === '#admin' ||
+      window.location.pathname === '/admin' ||
+      window.location.search.includes('admin')
+    ) {
+      setCurrentView('admin');
+      setUserRole('admin');
+    }
+  }, []);
 
   // Fetch initial data
   useEffect(() => {
@@ -138,6 +154,8 @@ export default function App() {
         onOpenBooking={() => handleOpenBooking()}
         unreadEmailsCount={notifications.length}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
+        onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
+        isAdminLoggedIn={isAdminLoggedIn}
       />
 
       {/* Main View Router */}
@@ -178,12 +196,12 @@ export default function App() {
               onSelectPlan={handleSelectPlan}
             />
           </div>
-        ) : (
+        ) : currentView === 'dashboard' ? (
           /* Member & Personal Trainer Dashboard */
           <DashboardView
             member={member}
             setMember={setMember}
-            userRole={userRole}
+            userRole={userRole === 'admin' ? 'member' : userRole}
             setUserRole={setUserRole}
             trainers={trainers}
             activeTab={activeDashboardTab}
@@ -194,6 +212,21 @@ export default function App() {
             }}
             onOpenNotifications={() => setIsNotificationsOpen(true)}
           />
+        ) : (
+          /* Executive Admin Suite */
+          <AdminPortal
+            onBackToHome={() => setCurrentView('home')}
+            onGoToMemberView={() => {
+              setCurrentView('dashboard');
+              setUserRole('member');
+            }}
+            onLogoutAdmin={() => {
+              setIsAdminLoggedIn(false);
+              setCurrentView('home');
+              setUserRole('member');
+            }}
+            trainers={trainers}
+          />
         )}
       </main>
 
@@ -201,6 +234,14 @@ export default function App() {
       <Footer
         onScrollTo={handleScrollTo}
         onOpenBooking={() => handleOpenBooking()}
+        onOpenAdmin={() => {
+          if (isAdminLoggedIn) {
+            setCurrentView('admin');
+            setUserRole('admin');
+          } else {
+            setIsAdminLoginModalOpen(true);
+          }
+        }}
       />
 
       {/* Modals & Dialogs */}
@@ -244,6 +285,16 @@ export default function App() {
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
         notifications={notifications}
+      />
+
+      <AdminLoginModal
+        isOpen={isAdminLoginModalOpen}
+        onClose={() => setIsAdminLoginModalOpen(false)}
+        onLoginSuccess={(adminUser) => {
+          setIsAdminLoggedIn(true);
+          setCurrentView('admin');
+          setUserRole('admin');
+        }}
       />
     </div>
   );

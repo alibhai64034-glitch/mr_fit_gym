@@ -192,5 +192,87 @@ export const api = {
   async getEmailNotifications(): Promise<EmailNotification[]> {
     const res = await fetch('/api/notifications/emails');
     return await res.json();
+  },
+
+  // Admin Portal API
+  async loginAdmin(credentials: { email?: string; password?: string }): Promise<{
+    success: boolean;
+    token?: string;
+    adminUser?: { name: string; role: string; email: string };
+    error?: string;
+  }> {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    return await res.json();
+  },
+
+  async getAdminMembers(): Promise<MemberProfile[]> {
+    try {
+      const res = await fetch('/api/admin/members');
+      if (!res.ok) throw new Error('Failed');
+      return await res.json();
+    } catch {
+      return [];
+    }
+  },
+
+  async updateAdminMemberStatus(id: string, status: MemberProfile['status']): Promise<{ success: boolean; member: MemberProfile }> {
+    const res = await fetch(`/api/admin/members/${id}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return await res.json();
+  },
+
+  async updateAdminMemberTier(id: string, tier: MemberProfile['tier']): Promise<{ success: boolean; member: MemberProfile }> {
+    const res = await fetch(`/api/admin/members/${id}/tier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier }),
+    });
+    return await res.json();
+  },
+
+  async createAdminMember(memberData: Partial<MemberProfile>): Promise<{ success: boolean; member: MemberProfile }> {
+    const res = await fetch('/api/admin/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(memberData),
+    });
+    return await res.json();
+  },
+
+  async deleteAdminMember(id: string): Promise<{ success: boolean }> {
+    const res = await fetch(`/api/admin/members/${id}`, {
+      method: 'DELETE',
+    });
+    return await res.json();
+  },
+
+  async updateEquipmentStatus(id: string, status: EquipmentItem['status']): Promise<{ success: boolean; equipment: EquipmentItem }> {
+    const res = await fetch(`/api/admin/equipment/${id}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return await res.json();
+  },
+
+  async broadcastAdminEmail(payload: {
+    recipientEmail: string;
+    recipientName: string;
+    subject: string;
+    message: string;
+  }): Promise<{ success: boolean; email: EmailNotification }> {
+    const res = await fetch('/api/admin/notifications/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
   }
 };
