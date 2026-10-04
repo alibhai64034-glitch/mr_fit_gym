@@ -227,6 +227,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
+            <a
+              href="/download/admin-files.zip"
+              download="admin-update-files.zip"
+              className="px-3.5 py-2 bg-[#c2f83d] hover:bg-[#b0e830] text-black rounded-lg text-xs font-extrabold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Download the updated admin source files as a ZIP archive for GitHub"
+            >
+              <span>Download ZIP for GitHub</span>
+            </a>
             <button
               onClick={onBackToHome}
               className="px-3.5 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white rounded-lg border border-white/[0.08] text-xs font-semibold transition-colors cursor-pointer"

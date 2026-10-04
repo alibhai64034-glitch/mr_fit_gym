@@ -978,6 +978,17 @@ async function startServer() {
     res.json({ success: true, email: sent });
   });
 
+  // Direct ZIP Download Endpoints for GitHub updates
+  app.get('/download/admin-files.zip', (req, res) => {
+    const file = path.resolve(__dirname, 'public/admin-update-files.zip');
+    res.download(file, 'admin-update-files.zip');
+  });
+
+  app.get('/download/mr-fit-gym-full-project.zip', (req, res) => {
+    const file = path.resolve(__dirname, 'public/mr-fit-gym-full-project.zip');
+    res.download(file, 'mr-fit-gym-full-project.zip');
+  });
+
   // Mount Vite or Serve Static Files
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.resolve(__dirname, 'dist')));
