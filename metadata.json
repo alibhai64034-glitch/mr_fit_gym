@@ -1,0 +1,6 @@
+{
+  "name": "Mr Fit Gym - High-Performance Training Club & Member Portal",
+  "description": "Professional fitness gym platform featuring interactive session booking, member login, equipment gallery, trainer nutrition plans, subscription management, and secure chat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
